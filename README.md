@@ -32,6 +32,17 @@ deactivate
 After the zip file is located inside the `Terraform folder`, you can run the AWS Infrastructure using:
 ```
 terraform init
-terraform plan
-terraform apply
+terraform plan -var-file="dev.tfvars"
+terraform apply -var-file="dev.tfvars"
 ```
+
+And to destroy:
+```
+terraform destroy -var-file="dev.tfvars"
+```
+
+
+# Testing deployed Lambda
+To test the API CALL, use this URL structure: https://`<AWS-URL>`?apikey=`<APIKEY>`&t=titanic
+
+For example, the URL will look like: https://ogpgg6.execute-api.eu-central-1.amazonaws.com/dev/resource?apikey=1234567&t=titanic
