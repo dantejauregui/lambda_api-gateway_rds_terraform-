@@ -45,4 +45,37 @@ terraform destroy -var-file="dev.tfvars"
 # Testing deployed Lambda
 To test the API CALL, use this URL structure: https://`<AWS-URL>`?apikey=`<APIKEY>`&t=titanic
 
-For example, the URL will look like: https://ogpgg6.execute-api.eu-central-1.amazonaws.com/dev/resource?apikey=1234567&t=titanic
+For example, the URL will look like: `https://ogpgg6.execute-api.eu-central-1.amazonaws.com/dev/resource?apikey=1234567&t=titanic`
+
+
+
+# RDS
+
+To see the whole list of available PostgresDBs use this command and scroll down to see the whole list:
+```
+aws rds describe-db-engine-versions \
+  --engine postgres \
+  --region eu-central-1 \
+  --query "DBEngineVersions[].EngineVersion"
+```
+
+
+Keep in mind that thanks to the null_resource block, we can insert the Postgres Schema and dummy data when `terraform apply`:
+```
+resource "null_resource" "cluster" {
+  depends_on = [aws_db_instance.education]
+
+  # The trigger detects when a new DB Host URL changes, so it will apply this new Schema to the new DB:
+  triggers = {
+    db_endpoint = aws_db_instance.education.address
+    schema_hash  = filemd5("../db/init_schema.sql")
+  }
+
+  provisioner "local-exec" {
+    command = "psql -h ${aws_db_instance.education.address} -p ${aws_db_instance.education.port}  -U ${var.db_user} -d ${var.db_name} -f ../db/init_schema.sql"
+    environment = {
+      PGPASSWORD = var.postgres_password
+    }
+  }
+}
+```

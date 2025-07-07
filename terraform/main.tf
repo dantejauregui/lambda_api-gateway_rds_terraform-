@@ -26,4 +26,9 @@ provider "aws" {
 
 module "rds" {
   source = "./modules/rds"
+  postgres_password    = module.secrets.postgres_password
+}
+
+module "secrets" {
+  source = "./modules/secrets"
 }
