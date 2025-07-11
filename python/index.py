@@ -3,11 +3,8 @@ import json
 import requests
 import boto3
 import os
+import psycopg2
 
-# Initialize DynamoDB
-# dynamodb = boto3.resource("dynamodb")
-# table_name = os.getenv("DYNAMODB_TABLE", "SearchResultsTable")
-# table = dynamodb.Table(table_name)
 
 def get_movie_info(event):
     """ Handles GET requests to fetch movie data from OMDb API """

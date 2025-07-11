@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   favorite_movie TEXT
 );
 
--- Insert 10 dummy rows
+-- Insert 10 dummy rows for Testing purposes:
 INSERT INTO users (name, favorite_movie) VALUES
 ('Alice', 'Titanic'),
 ('Bob', 'Inception'),

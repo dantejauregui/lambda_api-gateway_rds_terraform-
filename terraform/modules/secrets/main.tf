@@ -7,7 +7,7 @@ resource "random_password" "postgres_password" {
 # Define a new Secrets Manager secret to store RDS credentials:
 resource "aws_secretsmanager_secret" "pg_secrets" {
   name = "postgres-credentials"
-  recovery_window_in_days = 0  # ⬅️ Force immediate deletion when "terraform destroy" (Use it only in dev/test environments, No for PRODUCTION!)
+  recovery_window_in_days = 0  # Force immediate deletion when "terraform destroy" (Use it only in dev/test environments, No for PRODUCTION!)
 }
 
 resource "aws_secretsmanager_secret_version" "pg_secrets_version" {

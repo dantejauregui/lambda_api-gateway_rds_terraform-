@@ -12,21 +12,26 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-# module "lambda" {
-#   source = "./modules/lambda"
-# }
+module "lambda" {
+  source = "./modules/lambda"
 
-# module "api_gateway" {
-#   source    = "./modules/api_gateway"
-#   myregion  = var.myregion
-#   accountId = var.accountId
-#   invoke_arn    = module.lambda.invoke_arn
-#   function_name = module.lambda.function_name
-# }
+  rds_public_subnets = module.rds.public_subnets
+  rds_sg_id          = module.rds.rds_sg_id
+}
+
+module "api_gateway" {
+  source = "./modules/api_gateway"
+
+  myregion      = var.myregion
+  accountId     = var.accountId
+  invoke_arn    = module.lambda.invoke_arn
+  function_name = module.lambda.function_name
+}
 
 module "rds" {
   source = "./modules/rds"
-  postgres_password    = module.secrets.postgres_password
+
+  postgres_password = module.secrets.postgres_password
 }
 
 module "secrets" {

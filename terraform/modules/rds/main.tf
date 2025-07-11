@@ -77,6 +77,7 @@ resource "aws_db_instance" "education" {
 #Inpiration from Terraform Documentation: https://developer.hashicorp.com/terraform/tutorials/aws/aws-rds?in=terraform%2Faws&utm_source=WEBSITE&utm_medium=WEB_IO&utm_offer=ARTICLE_PAGE&utm_content=DOCS
 
 
+#For injecting DB Schema and dummy data for testing purposes:
 resource "null_resource" "cluster" {
   depends_on = [aws_db_instance.education]
 

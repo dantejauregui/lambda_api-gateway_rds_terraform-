@@ -13,7 +13,7 @@ Once activated the venv, install dependencies from requirements.txt inside your 
 pip install -r requirements.txt
 
 
-Later, go to the folder "package_to_zip" and package all the dependencies and zip it:
+Later, package all the dependencies and zip it:
 ```
 pip install --target package_to_zip -r requirements.txt
 cp index.py package_to_zip/
@@ -26,6 +26,15 @@ After the zip file is located inside the `Terraform folder`, disable the `venv` 
 ```
 deactivate
 ```
+
+
+## Issues with psycopg2 library for Postgres not working with AWS Lambda:
+In our local machine, do not download psycopg2 using PIP!
+
+Instead, you must download it from the Jkehler repository below, and `COPY-PASTE` the psycopg2-3.9 directory into your AWS Lambda project in `python/package_to_zip` Folder, and **rename it** to `psycopg2`. After that is donde, you can zip the package with the instructions in the section above.
+
+Get the psycopg2-3.9 folder from https://github.com/jkehler/awslambda-psycopg2/tree/master/psycopg2-3.9
+
 
 
 # Terraform Part:
