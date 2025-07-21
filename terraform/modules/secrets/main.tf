@@ -1,3 +1,6 @@
+variable "rds_port" {}
+variable "rds_host" {}
+
 # Generate a secure random alphanumeric password
 resource "random_password" "postgres_password" {
   length  = 24    # Total password length: 24 characters
@@ -15,6 +18,8 @@ resource "aws_secretsmanager_secret_version" "pg_secrets_version" {
 
   # Encode credentials as a JSON string and store as the secret value
   secret_string = jsonencode({
-    password = random_password.postgres_password.result # Dynamic, securely generated password
+    password = random_password.postgres_password.result, # Dynamic, securely generated password
+    port = var.rds_port,
+    host = var.rds_host
   })
 }

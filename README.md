@@ -88,3 +88,16 @@ resource "null_resource" "cluster" {
   }
 }
 ```
+
+# Comments about Temporal Testing AWS Services all together:
+To test we use the Lambda python script called: `lambda_python_manualTest.py`.
+Currently Lambda and RDS are in public vpc for testing purposes, so in order to test Lambda can use the values from Secrets Manager we have to comment temporaly in order to avoid the timeout issue due to the VPC netowrking reason:
+
+```
+vpc_config {
+  subnet_ids         = var.rds_public_subnets
+  security_group_ids = [var.rds_sg_id]
+}
+```
+
+After this is working, I will continue update the connection with Api Gateway.

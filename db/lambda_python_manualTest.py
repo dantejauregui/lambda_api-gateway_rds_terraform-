@@ -1,9 +1,34 @@
+#This script will connect to api_gateway service but also will post data to AWS RDS database:
+import json
+import requests
+import boto3
+import os
+import psycopg2
+
+def get_secret(secret_name="postgres-credentials", region_name="eu-central-1"):
+    """
+    Retrieve secrets from AWS Secrets Manager
+    """
+    session = boto3.session.Session()
+    client = session.client(service_name="secretsmanager", region_name=region_name)
+
+    try:
+        response = client.get_secret_value(SecretId=secret_name)
+        secret = json.loads(response['SecretString'])
+        return secret
+    except Exception as e:
+        print(f"Error retrieving secret: {e}")
+        raise
+
 def lambda_handler(event, context):
+    # First, fetch the secret
+    secret = get_secret()
+
     # Hardcoded DB credentials for testing only
-    host = "<HOST>"
+    host = secret["host"]
     dbname = "education"
     user = "edu"
-    password = "<PASSWORD>"
+    password = secret["password"]
     port = 5432
 
     try:
@@ -32,3 +57,4 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": f"Error: {str(e)}"
         }
+

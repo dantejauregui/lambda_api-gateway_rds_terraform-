@@ -28,7 +28,8 @@ data "aws_iam_policy_document" "execution_policy_forLambda_logging_vpc" {
       "logs:PutLogEvents",
       "ec2:CreateNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface"
+      "ec2:DeleteNetworkInterface",
+      "secretsmanager:GetSecretValue"
     ]
 
     resources = ["*"]
@@ -47,7 +48,7 @@ resource "aws_lambda_function" "hello_lambda" {
   role             = aws_iam_role.lambda_execution_role.arn
   handler          = "index.lambda_handler"
   source_code_hash = filebase64sha256("lambda.zip")
-  timeout          = 10
+  timeout          = 15
   runtime          = "python3.9"
 
   vpc_config {

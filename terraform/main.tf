@@ -36,4 +36,7 @@ module "rds" {
 
 module "secrets" {
   source = "./modules/secrets"
+
+  rds_port = module.rds.rds_port
+  rds_host = module.rds.rds_endpoint
 }
