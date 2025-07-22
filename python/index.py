@@ -22,6 +22,64 @@ def get_movie_info(event):
 
     return {"statusCode": response.status_code, "body": json.dumps(response.json())}
 
+def get_secret(secret_name="postgres-credentials", region_name="eu-central-1"):
+    """
+    Retrieve secrets from AWS Secrets Manager
+    """
+    session = boto3.session.Session()
+    client = session.client(service_name="secretsmanager", region_name=region_name)
+
+    try:
+        response = client.get_secret_value(SecretId=secret_name)
+        secret = json.loads(response['SecretString'])
+        return secret
+    except Exception as e:
+        print(f"Error retrieving secret: {e}")
+        raise
+        
+def get_db_info(event):
+    """ Handles GET requests to fetch RDS DB data """
+    # First, fetch the secret
+    secret = get_secret()
+
+    # url = f"http://www.omdbapi.com/?t={movie_title}&apikey={api_key}"
+    # response = requests.get(url)
+    # return {"statusCode": response.status_code, "body": json.dumps(response.json())}
+
+    # Secrets from AWS & hardcoded DB credentials for testing only
+    host = secret["host"]
+    dbname = "education"
+    user = "edu"
+    password = secret["password"]
+    port = 5432
+
+    try:
+        conn = psycopg2.connect(
+            host=host,
+            database=dbname,
+            user=user,
+            password=password,
+            port=port
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM users LIMIT 5;")  # Update table name if needed
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return {
+            "statusCode": 200,
+            "body": str(rows)
+        }
+
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": f"Error: {str(e)}"
+        }
+
 # def save_user_info(event):
 #     """ Handles POST requests to save user data in DynamoDB """
 #     try:
@@ -46,7 +104,7 @@ def lambda_handler(event, context):
     http_method = event["httpMethod"]
 
     if http_method == "GET":
-        return get_movie_info(event)
+        return get_db_info(event)
     elif http_method == "POST":
         return save_user_info(event)
     else:

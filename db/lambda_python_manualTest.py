@@ -24,7 +24,7 @@ def lambda_handler(event, context):
     # First, fetch the secret
     secret = get_secret()
 
-    # Hardcoded DB credentials for testing only
+    # Secrets from AWS & hardcoded DB credentials for testing only
     host = secret["host"]
     dbname = "education"
     user = "edu"

@@ -51,10 +51,11 @@ resource "aws_lambda_function" "hello_lambda" {
   timeout          = 15
   runtime          = "python3.9"
 
-  vpc_config {
-    subnet_ids         = var.rds_public_subnets
-    security_group_ids = [var.rds_sg_id]
-  }
+#Temporaly commented for testing purposes:
+  # vpc_config {
+  #   subnet_ids         = var.rds_public_subnets
+  #   security_group_ids = [var.rds_sg_id]
+  # }
 
   environment {
     variables = {
