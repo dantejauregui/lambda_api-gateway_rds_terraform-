@@ -63,7 +63,7 @@ def get_db_info(event):
         )
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM users LIMIT 5;")  # Update table name if needed
+        cursor.execute("SELECT * FROM users ORDER BY id DESC LIMIT 5;")  # Update table name if needed
         rows = cursor.fetchall()
 
         cursor.close()
@@ -80,24 +80,55 @@ def get_db_info(event):
             "body": f"Error: {str(e)}"
         }
 
-# def save_user_info(event):
-#     """ Handles POST requests to save user data in DynamoDB """
-#     try:
-#         body = json.loads(event["body"])  # Parse incoming JSON payload
-#         name = body.get("name")
-#         favorite_movie = body.get("favorite_movie")
-#         age = body.get("age")
+def save_user_info(event):
+    """ Handles POST requests to save user data in PostgreSQL RDS """
+    try:
+        # Parse request body
+        body = json.loads(event.get("body", "{}"))
+        name = body.get("name")
+        favorite_movie = body.get("favorite_movie")
 
-#         if not name or not favorite_movie or not age:
-#             return {"statusCode": 400, "body": json.dumps({"error": "Missing required fields (name, favorite_movie, age)"})}
+        if not name or not favorite_movie:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({"error": "Missing required fields: name and favorite_movie"})
+            }
 
-#         # Insert into DynamoDB
-#         table.put_item(Item={"name": name, "favorite_movie": favorite_movie, "age": int(age)})
+        # Get DB credentials from Secrets Manager
+        secret = get_secret()
+        host = secret["host"]
+        dbname = "education"
+        user = "edu"
+        password = secret["password"]
+        port = 5432
 
-#         return {"statusCode": 200, "body": json.dumps({"message": "User info saved successfully"})}
-    
-#     except Exception as e:
-#         return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
+        # Connect to PostgreSQL and insert data
+        conn = psycopg2.connect(
+            host=host,
+            database=dbname,
+            user=user,
+            password=password,
+            port=port
+        )
+        cursor = conn.cursor()
+
+        insert_query = "INSERT INTO users (name, favorite_movie) VALUES (%s, %s);"
+        cursor.execute(insert_query, (name, favorite_movie))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "User info saved successfully"})
+        }
+
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
+        }
 
 def lambda_handler(event, context):
     """ Main Lambda handler that routes GET and POST requests """

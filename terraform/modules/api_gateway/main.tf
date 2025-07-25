@@ -21,12 +21,28 @@ resource "aws_api_gateway_method" "get_method" {
   http_method   = "GET"
   authorization = "NONE"
 }
-
 #General Integration for Lambda & API Gateway only for GET Method
 resource "aws_api_gateway_integration" "integration_get" {
   rest_api_id             = aws_api_gateway_rest_api.api.id
   resource_id             = aws_api_gateway_resource.resource.id
   http_method             = aws_api_gateway_method.get_method.http_method # From the method, the received value will be "GET"
+  integration_http_method = "POST"  # when it forwards the request to Lambda, it must send as POST
+  type                    = "AWS_PROXY"  # also called Lambda Proxy Integration, so the entire request (method, headers, query params, body, etc.) is passed to the Lambda in a standard JSON format (API Gateway doesn't transform anything — it's just a data-pipe)
+
+  uri                     = var.invoke_arn  # will use the values coming from the Lambda Outputs
+}
+
+resource "aws_api_gateway_method" "post_method" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+#General Integration for Lambda & API Gateway only for POST Method
+resource "aws_api_gateway_integration" "integration_post" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.resource.id
+  http_method             = aws_api_gateway_method.post_method.http_method # From the method, the received value will be "GET"
   integration_http_method = "POST"  # when it forwards the request to Lambda, it must send as POST
   type                    = "AWS_PROXY"  # also called Lambda Proxy Integration, so the entire request (method, headers, query params, body, etc.) is passed to the Lambda in a standard JSON format (API Gateway doesn't transform anything — it's just a data-pipe)
 

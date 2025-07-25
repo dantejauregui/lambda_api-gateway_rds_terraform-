@@ -101,3 +101,17 @@ vpc_config {
 ```
 
 After this is working, I will continue update the connection with Api Gateway.
+
+
+# API Gateway:
+There are 2 methods GET and POST available:
+
+For GET calls, just use the `api_gateway_url` terraform output in the web browser, after this you will see the 5 latest values from the DB.
+
+
+For POST calls, just push values using this example command:
+```
+curl -X POST <api_gateway_URL TERRAFORM OUTPUT> \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Joe", "favorite_movie": "The Matrix"}'
+```
