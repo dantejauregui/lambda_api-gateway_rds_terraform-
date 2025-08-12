@@ -5,6 +5,57 @@ import boto3
 import os
 import psycopg2
 
+def _connect_from_secret():
+    secret = get_secret()
+    return psycopg2.connect(
+        host=secret["host"],
+        port=secret.get("port", 5432),
+        dbname=secret.get("dbname", "education"),
+        user=secret.get("username", "edu"),
+        password=secret["password"],
+    )
+
+def _load_sql_from_package(filename="init_schema.sql"):
+    # Assumes init_schema.sql is zipped with your Lambda next to index.py
+    here = os.path.dirname(__file__)
+    path = os.path.join(here, filename)
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+def _execute_sql_batch(conn, sql_text):
+    cleaned = "\n".join(
+        line for line in sql_text.splitlines()
+        if not line.strip().startswith("--")
+    )
+    with conn.cursor() as cur:
+        for stmt in cleaned.split(";"):
+            s = stmt.strip()
+            if s:
+                cur.execute(s + ";")
+
+def init_db_handler(event):
+    # 2) Read SQL from the packaged file
+    try:
+        sql_text = _load_sql_from_package("init_schema.sql")
+    except Exception as e:
+        return {"statusCode": 500, "body": json.dumps({"error": f"cannot read SQL: {e}"})}
+
+    # 3) Connect and run within a transaction
+    try:
+        conn = _connect_from_secret()
+        conn.autocommit = False
+        _execute_sql_batch(conn, sql_text)
+        conn.commit()
+        conn.close()
+        return {"statusCode": 200, "body": json.dumps({"message": "schema initialized"})}
+    except Exception as e:
+        try:
+            conn.rollback()
+            conn.close()
+        except Exception:
+            pass
+        return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
+
 
 def get_movie_info(event):
     """ Handles GET requests to fetch movie data from OMDb API """
@@ -133,9 +184,14 @@ def save_user_info(event):
 def lambda_handler(event, context):
     """ Main Lambda handler that routes GET and POST requests """
     http_method = event["httpMethod"]
+    path   = event.get("path", "")
+
+    if http_method == "POST" and path.endswith("/init"):
+        return init_db_handler(event)
 
     if http_method == "GET":
         return get_db_info(event)
+
     elif http_method == "POST":
         return save_user_info(event)
     else:
