@@ -14,6 +14,11 @@ resource "aws_api_gateway_resource" "resource" {
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
   rest_api_id = aws_api_gateway_rest_api.api.id
 }
+resource "aws_api_gateway_resource" "init" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "init"
+}
 
 resource "aws_api_gateway_method" "get_method" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
@@ -30,6 +35,21 @@ resource "aws_api_gateway_integration" "integration_get" {
   type                    = "AWS_PROXY"  # also called Lambda Proxy Integration, so the entire request (method, headers, query params, body, etc.) is passed to the Lambda in a standard JSON format (API Gateway doesn't transform anything — it's just a data-pipe)
 
   uri                     = var.invoke_arn  # will use the values coming from the Lambda Outputs
+}
+
+resource "aws_api_gateway_method" "init_post" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.init.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "init_post" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.init.id
+  http_method             = aws_api_gateway_method.init_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.invoke_arn
 }
 
 resource "aws_api_gateway_method" "post_method" {
@@ -49,7 +69,7 @@ resource "aws_api_gateway_integration" "integration_post" {
   uri                     = var.invoke_arn  # will use the values coming from the Lambda Outputs
 }
 
-#General IAM Permission for Lambda for GET/POST
+#General IAM Permission for Lambda for GET/POST in path "/resource"
 resource "aws_lambda_permission" "apigw_lambda" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
@@ -63,9 +83,26 @@ resource "aws_lambda_permission" "apigw_lambda" {
 ## Inpired from Terraform Registry link: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/api_gateway_integration
 
 
+#IAM Permission for Lambda for POST in path "/init for the DB Schema":
+resource "aws_lambda_permission" "apigw_lambda_init" {
+  statement_id  = "AllowExecutionFromAPIGatewayInit"
+  action        = "lambda:InvokeFunction"
+  function_name = var.function_name
+  principal     = "apigateway.amazonaws.com"
+  # REST execution ARN pattern: arn:aws:execute-api:region:acct:api-id/stage/METHOD/resourcePath
+  source_arn    = "arn:aws:execute-api:${var.myregion}:${var.accountId}:${aws_api_gateway_rest_api.api.id}/dev/POST/init"
+}
+
 #Ensuring GET Integrations exist before deploying
 resource "aws_api_gateway_deployment" "deployment" {
-  depends_on  = [aws_api_gateway_integration.integration_get, aws_api_gateway_method.get_method]
+  depends_on  = [
+    aws_api_gateway_integration.integration_get, 
+    aws_api_gateway_method.get_method,
+    aws_api_gateway_integration.integration_post,
+    aws_api_gateway_method.post_method,
+    aws_api_gateway_integration.init_post,
+    aws_api_gateway_method.init_post
+  ]
   rest_api_id = aws_api_gateway_rest_api.api.id
 }
 resource "aws_api_gateway_stage" "stage" {

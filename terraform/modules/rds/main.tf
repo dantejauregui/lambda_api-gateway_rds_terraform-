@@ -78,20 +78,20 @@ resource "aws_db_instance" "education" {
 #Inpiration from Terraform Documentation: https://developer.hashicorp.com/terraform/tutorials/aws/aws-rds?in=terraform%2Faws&utm_source=WEBSITE&utm_medium=WEB_IO&utm_offer=ARTICLE_PAGE&utm_content=DOCS
 
 
-#For injecting DB Schema and dummy data for testing purposes:
-resource "null_resource" "cluster" {
-  depends_on = [aws_db_instance.education]
+#For injecting DB Schema and dummy data for testing purposes we used this NULL_RESOURCE, but now to create DB Schema we do it through POST call API_GATEWAY using the "/init" path:
+# resource "null_resource" "cluster" {
+#   depends_on = [aws_db_instance.education]
 
-  # The trigger detects when a new DB Host URL changes, so it will apply this new Schema to the new DB:
-  triggers = {
-    db_endpoint = aws_db_instance.education.address
-    schema_hash  = filemd5("../db/init_schema.sql")
-  }
+#   # The trigger detects when a new DB Host URL changes, so it will apply this new Schema to the new DB:
+#   triggers = {
+#     db_endpoint = aws_db_instance.education.address
+#     schema_hash  = filemd5("../db/init_schema.sql")
+#   }
 
-  provisioner "local-exec" {
-    command = "psql -h ${aws_db_instance.education.address} -p ${aws_db_instance.education.port}  -U ${var.db_user} -d ${var.db_name} -f ../db/init_schema.sql"
-    environment = {
-      PGPASSWORD = var.postgres_password
-    }
-  }
-}
+#   provisioner "local-exec" {
+#     command = "psql -h ${aws_db_instance.education.address} -p ${aws_db_instance.education.port}  -U ${var.db_user} -d ${var.db_name} -f ../db/init_schema.sql"
+#     environment = {
+#       PGPASSWORD = var.postgres_password
+#     }
+#   }
+# }

@@ -5,5 +5,6 @@ terraform {
     key     = "lambda_api_rds/dev.tfstate"
     region  = "eu-central-1"
     encrypt = true
+    # use_lockfile = true  # the new way for "state locking" will be handled natively within S3
   }
 }

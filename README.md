@@ -69,7 +69,7 @@ aws rds describe-db-engine-versions \
 ```
 
 
-Keep in mind that thanks to the null_resource block, we can insert the Postgres Schema and dummy data when `terraform apply`:
+Keep in mind in the past we used the `null_resource` block to insert automatically the Postgres Schema and dummy data when `terraform apply`:
 ```
 resource "null_resource" "cluster" {
   depends_on = [aws_db_instance.education]
@@ -89,6 +89,9 @@ resource "null_resource" "cluster" {
 }
 ```
 
+But now, we create the Schema and inject dummy data using Api_gateway using the POST call to the path `/init` as detailed below.
+
+
 # Comments about Temporal Testing AWS Services all together:
 To test we use the Lambda python script called: `lambda_python_manualTest.py`.
 Currently Lambda and RDS are in public vpc for testing purposes, so in order to test Lambda can use the values from Secrets Manager we have to comment temporaly in order to avoid the timeout issue due to the VPC netowrking reason:
@@ -104,14 +107,21 @@ After this is working, I will continue update the connection with Api Gateway.
 
 
 # API Gateway:
-There are 2 methods GET and POST available:
+1.-There are two methods for GET and POST available in PATH "/resource":
 
 For GET calls, just use the `api_gateway_url` terraform output in the web browser, after this you will see the 5 latest values from the DB.
 
 
 For POST calls, just push values using this example command:
 ```
-curl -X POST <api_gateway_URL TERRAFORM OUTPUT> \
+curl -X POST <api_gateway_URL TERRAFORM OUTPUT>/dev/resource \
   -H "Content-Type: application/json" \
   -d '{"name": "Joe", "favorite_movie": "The Matrix"}'
+```
+
+2.-There are only one method for POST available in PATH "/init" used to create the DB Schema and inject dummy data in the PostgresDB:
+
+For the POST call, in any console just execute this command only 1 time at the beginning before injecting individual rows to the DB:
+```
+curl -i -X POST "api_gateway_URL TERRAFORM OUTPUT>/dev/init"
 ```
