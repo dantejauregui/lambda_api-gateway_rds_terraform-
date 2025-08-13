@@ -15,8 +15,9 @@ provider "aws" {
 module "lambda" {
   source = "./modules/lambda"
 
-  rds_public_subnets = module.rds.public_subnets
-  rds_sg_id          = module.rds.rds_sg_id
+  rds_public_subnets  = module.rds.public_subnets
+  rds_private_subnets = module.rds.private_subnets
+  rds_sg_id           = module.rds.rds_sg_id
 }
 
 module "api_gateway" {

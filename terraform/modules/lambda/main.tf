@@ -1,5 +1,6 @@
 variable "rds_sg_id" {}
 variable "rds_public_subnets" {}
+variable "rds_private_subnets" {}
 
 # IAM role for Lambda execution (this is a Resource-based policy (so uses "Principal" or inline-policy focused in a specific aws resoruces), and is NOT an identity-based policy that can be assigned to many aws resources)
 data "aws_iam_policy_document" "trust_policy_lambda_assume_role" {
@@ -51,11 +52,10 @@ resource "aws_lambda_function" "hello_lambda" {
   timeout          = 15
   runtime          = "python3.9"
 
-#Temporaly commented for testing purposes:
-  # vpc_config {
-  #   subnet_ids         = var.rds_public_subnets
-  #   security_group_ids = [var.rds_sg_id]
-  # }
+  vpc_config {
+    subnet_ids         = var.rds_private_subnets
+    security_group_ids = [var.rds_sg_id]
+  }
 
   environment {
     variables = {

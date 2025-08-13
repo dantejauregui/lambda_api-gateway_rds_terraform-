@@ -10,16 +10,20 @@ module "vpc" {
 
   name                 = "education"
   cidr                 = "10.0.0.0/16"
+
   azs                  = data.aws_availability_zones.available.names
   public_subnets       = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
-  
+  private_subnets      = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+
+  enable_nat_gateway     = true
+  single_nat_gateway     = true
   enable_dns_hostnames = true
   enable_dns_support   = true
 }
 
 resource "aws_db_subnet_group" "education" {
   name       = "education"
-  subnet_ids = module.vpc.public_subnets
+  subnet_ids = module.vpc.private_subnets
 
   tags = {
     Name = "Education"
@@ -48,6 +52,24 @@ resource "aws_security_group" "rds" {
     Name = "education_rds"
   }
 }
+resource "aws_security_group" "lambda" {
+  name        = "education_lambda"
+  description = "Lambda egress to NAT/VPCE/Internet"
+  vpc_id      = module.vpc.vpc_id
+
+  # Wide egress so Lambda can reach Secrets Manager (443), etc.
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { 
+    Name = "education_lambda" 
+  }
+}
+
 
 #This is optional, but useful for custom parameters in the DB:
 resource "aws_db_parameter_group" "education" {
@@ -72,13 +94,13 @@ resource "aws_db_instance" "education" {
   db_subnet_group_name   = aws_db_subnet_group.education.name
   vpc_security_group_ids = [aws_security_group.rds.id]
   parameter_group_name   = aws_db_parameter_group.education.name
-  publicly_accessible    = true
+  publicly_accessible    = false
   skip_final_snapshot    = true #in PROD Env should be "false"
 }
 #Inpiration from Terraform Documentation: https://developer.hashicorp.com/terraform/tutorials/aws/aws-rds?in=terraform%2Faws&utm_source=WEBSITE&utm_medium=WEB_IO&utm_offer=ARTICLE_PAGE&utm_content=DOCS
 
 
-#For injecting DB Schema and dummy data for testing purposes we used this NULL_RESOURCE, but now to create DB Schema we do it through POST call API_GATEWAY using the "/init" path:
+#For injecting DB Schema and dummy data for testing purposes we used this NULL_RESOURCE, BUT NOW to create DB Schema we do it through POST call API_GATEWAY using the "/init" path:
 # resource "null_resource" "cluster" {
 #   depends_on = [aws_db_instance.education]
 
