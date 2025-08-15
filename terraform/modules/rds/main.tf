@@ -34,23 +34,19 @@ resource "aws_security_group" "rds" {
   name   = "education_rds"
   vpc_id = module.vpc.vpc_id
 
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # No public access here!
 
   tags = {
     Name = "education_rds"
   }
+}
+resource "aws_security_group_rule" "allow_lambda_to_rds" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lambda.id  # THIS is the Key for SG-to-SG Connection, So only the source traffic from Lambda gets through to RDS
+  security_group_id        = aws_security_group.rds.id
 }
 resource "aws_security_group" "lambda" {
   name        = "education_lambda"
